@@ -10,6 +10,8 @@ from cinema.views import (
     OrderViewSet,
 )
 
+from .views import MovieDetailView
+
 router = routers.DefaultRouter()
 router.register("genres", GenreViewSet)
 router.register("actors", ActorViewSet)
@@ -18,6 +20,9 @@ router.register("movies", MovieViewSet)
 router.register("movie_sessions", MovieSessionViewSet)
 router.register("orders", OrderViewSet)
 
-urlpatterns = [path("", include(router.urls))]
+urlpatterns = [
+    path("", include(router.urls)),
+    path('movies/<int:pk>/', MovieDetailView.as_view(), name='movie-detail'),
+    ]
 
 app_name = "cinema"

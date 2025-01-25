@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
+from django.utils.dateparse import parse_datetime
+from django.utils import timezone
 
 
 class CinemaHall(models.Model):
@@ -41,6 +43,12 @@ class Movie(models.Model):
     duration = models.IntegerField()
     genres = models.ManyToManyField(Genre)
     actors = models.ManyToManyField(Actor)
+    image = models.ImageField(upload_to="movies/", null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.image:
+            self.image = None  # Убедитесь, что пустые значения сохраняются правильно
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["title"]
@@ -53,6 +61,19 @@ class MovieSession(models.Model):
     show_time = models.DateTimeField()
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)
     cinema_hall = models.ForeignKey(CinemaHall, on_delete=models.CASCADE)
+
+    def __init__(self, *args, **kwargs):
+        show_time = kwargs.get("show_time")
+        if isinstance(show_time, str):
+            kwargs["show_time"] = parse_datetime(show_time)
+        super().__init__(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        if isinstance(self.show_time, str):
+            self.show_time = parse_datetime(self.show_time)
+        if self.show_time and self.show_time.tzinfo is None:
+            self.show_time = timezone.make_aware(self.show_time)
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["-show_time"]

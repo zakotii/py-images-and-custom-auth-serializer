@@ -10,6 +10,11 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from cinema.models import Genre, Actor, CinemaHall, Movie, MovieSession, Order
 from cinema.permissions import IsAdminOrIfAuthenticatedReadOnly
 
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
+
 from cinema.serializers import (
     GenreSerializer,
     ActorSerializer,
@@ -23,6 +28,13 @@ from cinema.serializers import (
     OrderSerializer,
     OrderListSerializer,
 )
+
+from rest_framework import generics
+from .serializers import MovieSerializer
+
+class MovieDetailView(generics.RetrieveAPIView):
+    queryset = Movie.objects.all()
+    serializer_class = MovieSerializer
 
 
 class GenreViewSet(
@@ -102,6 +114,20 @@ class MovieViewSet(
             return MovieDetailSerializer
 
         return MovieSerializer
+
+    @action(detail=True, methods=["post"], parser_classes=[MultiPartParser, FormParser])
+    def upload_image(self, request, pk=None):
+        """Upload an image to a movie"""
+        movie = self.get_object()
+        image = request.FILES.get("image")
+
+        if not image:
+            return Response({"error": "No image provided"}, status=HTTP_400_BAD_REQUEST)
+
+        movie.image = image
+        movie.save()
+
+        return Response({"message": "Image uploaded successfully"}, status=HTTP_200_OK)
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):
