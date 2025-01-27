@@ -27,10 +27,33 @@ from cinema.serializers import (
     MovieListSerializer,
     OrderSerializer,
     OrderListSerializer,
+    MovieImageSerializer,
 )
 
 from rest_framework import generics
-from .serializers import MovieSerializer
+from rest_framework.views import APIView
+
+
+class MovieImageUploadView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        movie_id = kwargs.get("id")  # Получаем ID фильма из URL
+        try:
+            movie = Movie.objects.get(id=movie_id)  # Получаем объект Movie
+        except Movie.DoesNotExist:
+            return Response({"error": "Movie not found"}, status=404)
+
+        serializer = MovieImageSerializer(movie,
+                                          data=request.data,
+                                          partial=True
+                                          )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=HTTP_200_OK)
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
 
 class MovieDetailView(generics.RetrieveAPIView):
     queryset = Movie.objects.all()
@@ -115,19 +138,28 @@ class MovieViewSet(
 
         return MovieSerializer
 
-    @action(detail=True, methods=["post"], parser_classes=[MultiPartParser, FormParser])
+    @action(detail=True, methods=["post"],
+            parser_classes=[MultiPartParser,
+                            FormParser]
+            )
     def upload_image(self, request, pk=None):
         """Upload an image to a movie"""
         movie = self.get_object()
         image = request.FILES.get("image")
 
         if not image:
-            return Response({"error": "No image provided"}, status=HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "No image provided"},
+                status=HTTP_400_BAD_REQUEST
+            )
 
         movie.image = image
         movie.save()
 
-        return Response({"message": "Image uploaded successfully"}, status=HTTP_200_OK)
+        return Response(
+            {"message": "Image uploaded successfully"},
+            status=HTTP_200_OK
+        )
 
 
 class MovieSessionViewSet(viewsets.ModelViewSet):

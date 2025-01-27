@@ -12,6 +12,12 @@ from cinema.models import (
 )
 
 
+class MovieImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = ("image",)
+
+
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
@@ -35,7 +41,14 @@ class MovieSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "genres", "actors", "image")
+        fields = ("id", "title",
+                  "description", "duration",
+                  "genres", "actors", "image")
+
+    def create(self, validated_data):
+        # Убираем поле image из validated_data при создании
+        validated_data.pop("image", None)
+        return super().create(validated_data)
 
 
 class MovieListSerializer(MovieSerializer):
@@ -53,7 +66,9 @@ class MovieDetailSerializer(MovieSerializer):
 
     class Meta:
         model = Movie
-        fields = ("id", "title", "description", "duration", "genres", "actors")
+        fields = ("id", "title",
+                  "description", "duration",
+                  "genres", "actors", "image")
 
 
 class MovieSessionSerializer(serializers.ModelSerializer):
@@ -66,7 +81,9 @@ class MovieSessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MovieSession
-        fields = ['id', 'show_time', 'movie_title', 'cinema_hall_name', 'movie_image']
+        fields = ["id", "show_time",
+                  "movie_title", "cinema_hall_name",
+                  "movie_image"]
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
@@ -88,6 +105,7 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "cinema_hall_name",
             "cinema_hall_capacity",
             "tickets_available",
+            "movie_image",
         )
 
 
