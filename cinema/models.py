@@ -46,8 +46,6 @@ class Movie(models.Model):
     image = models.ImageField(upload_to="movies/", null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        if not self.image:
-            self.image = None
         super().save(*args, **kwargs)
 
     class Meta:
